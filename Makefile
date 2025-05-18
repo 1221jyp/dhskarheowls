@@ -9,6 +9,6 @@ preprocess:
 # 2. Git 커밋 및 푸시
 commit: preprocess
 	@echo "✅ Committing and pushing to GitHub..."
-	git add 전처리_결과.json
+	git add .
 	git commit -m "Update: 최신 전처리 결과 반영"
 	git push origin main

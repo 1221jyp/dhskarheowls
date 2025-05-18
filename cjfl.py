@@ -1,11 +1,13 @@
+
 import pandas as pd
 import json
 from collections import defaultdict
 
-# 1. 데이터 불러오기
-df = pd.read_excel("경기결과 정리표.xlsx")  # 경로 수정 필요
+# 엑셀 파일 불러오기
+filepath = "경기결과 정리표.xlsx"
+df = pd.read_excel(filepath)
 
-# 2. 조 편성
+# 조 편성 정보
 group_data = {
     "1학년-남자부-A조": ["1-4", "1-7", "1-9", "1-11"],
     "1학년-남자부-B조": ["1-3", "1-5", "1-8", "1-12"],
@@ -25,7 +27,7 @@ group_data = {
     "3학년-여자부-B조": ["3-2", "3-6", "3-7", "3-8"]
 }
 
-# 3. 기본 결과 구조 초기화
+# 결과 초기화
 results = {
     group: {
         team: {
@@ -40,15 +42,14 @@ results = {
     } for group, teams in group_data.items()
 }
 
-# 4. 조 이름 생성
+# 조 이름 생성
 df["조_이름"] = df.apply(lambda row: f"{row['학년']}학년-{row['성별']}자부-{row['조']}", axis=1)
 
-# 5. 경기 기록 반영
+# 점수 누적
 for _, row in df.dropna(subset=["승팀", "패팀", "점수(승팀)", "점수(패팀)"]).iterrows():
     group = row["조_이름"]
     if group not in results:
         continue
-
     win = f"{row['학년']}-{int(row['승팀'])}"
     lose = f"{row['학년']}-{int(row['패팀'])}"
     ws, ls = row["점수(승팀)"], row["점수(패팀)"]
@@ -65,13 +66,13 @@ for _, row in df.dropna(subset=["승팀", "패팀", "점수(승팀)", "점수(�
         results[group][lose]["실점"] += ws
         results[group][lose]["맞대결"][win] = "패"
 
-# 6. 와일드카드 선발
+# 와일드카드 계산
+from collections import defaultdict
 second_places = defaultdict(list)
 
 for group, teams in results.items():
     if not group.startswith(("1학년", "2학년")):
         continue
-
     div_key = "-".join(group.split("-")[:2])
     sorted_teams = sorted(
         teams.items(),
@@ -80,7 +81,6 @@ for group, teams in results.items():
             -(item[1]["총점"] - item[1]["실점"])
         )
     )
-
     if len(sorted_teams) >= 2:
         second_places[div_key].append((group, sorted_teams[1][0], sorted_teams[1][1]))
 
@@ -92,8 +92,26 @@ for div, candidates in second_places.items():
     g, t, _ = best
     results[g][t]["isWildcard"] = True
 
-# 7. 저장
+# 경기 일정 JSON 만들기
+schedule_json = defaultdict(list)
+for _, row in df.iterrows():
+    grade = int(row["학년"])
+    schedule_json[grade].append({
+        "날짜": str(row["날짜"].date()) if pd.notna(row["날짜"]) else "",
+        "성별": row["성별"],
+        "조": row["조"],
+        "경기": row["경기"],
+        "승팀": str(int(row["승팀"])) if pd.notna(row["승팀"]) else None,
+        "점수승": int(row["점수(승팀)"]) if pd.notna(row["점수(승팀)"]) else None,
+        "점수패": int(row["점수(패팀)"]) if pd.notna(row["점수(패팀)"]) else None,
+        "패팀": str(int(row["패팀"])) if pd.notna(row["패팀"]) else None,
+    })
+
+# JSON 파일 저장
 with open("전처리_결과_승자승_와일드카드.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
-print("✅ 전처리 완료: 전처리_결과_승자승_와일드카드.json 저장됨")
+with open("학년별_경기일정.json", "w", encoding="utf-8") as f:
+    json.dump(schedule_json, f, ensure_ascii=False, indent=2)
+
+print("✅ 저장 완료")
