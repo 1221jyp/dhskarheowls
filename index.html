@@ -17,6 +17,19 @@
         background-color: #f8f9fa;
         margin-bottom: 1rem;
         padding: 0.5rem;
+        overflow: auto;
+      }
+      .first-place {
+        background-color: #d4edda; /* 연한 초록 */
+      }
+      .wildcard {
+        background-color: #fff3cd; /* 연한 노랑 */
+      }
+      .schedule-male {
+        background-color: #d0ebff; /* 연파랑 */
+      }
+      .schedule-female {
+        background-color: #ffe0e0; /* 연분홍 */
       }
     </style>
   </head>
@@ -37,6 +50,34 @@
           <button class="btn btn-outline-secondary flex-fill" onclick="showGrade(3)">3학년</button>
         </div>
       </div>
+      <div class="mt-3" id="legend">
+        <div class="d-flex flex-wrap align-items-center gap-3">
+          <div class="d-flex align-items-center">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                background-color: #d4edda;
+                border: 1px solid #ccc;
+                margin-right: 5px;
+              "
+            ></div>
+            <span>1위 팀</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                background-color: #fff3cd;
+                border: 1px solid #ccc;
+                margin-right: 5px;
+              "
+            ></div>
+            <span>와일드카드 팀</span>
+          </div>
+        </div>
+      </div>
 
       <!-- HTML 출력 영역 -->
       <div class="row mb-4" id="gradeContent">
@@ -46,6 +87,7 @@
 
     <script>
       let scoreData = {};
+      let schedules = {};
 
       const gradeGroupMap = {
         1: [
@@ -66,31 +108,67 @@
         ],
         3: ["3학년-남자부-A조", "3학년-남자부-B조", "3학년-여자부-A조", "3학년-여자부-B조"],
       };
+      function renderSchedule(grade) {
+        const scheduleBox = document.createElement("div");
+        scheduleBox.classList.add("schedule-box", "mt-4");
+
+        const list = schedules[grade] || [];
+
+        const html = `
+    <h4 class="mt-4">📅 ${grade}학년 경기 일정</h4>
+    <ul class="list-group">
+      ${list
+        .map((row) => {
+          const genderClass = row.성별 === "남" ? "schedule-male" : "schedule-female";
+          if (row.승팀) {
+            return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} → ${row.승팀}반 승 (${row.점수승}:${row.점수패})</li>`;
+          } else {
+            return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} (예정)</li>`;
+          }
+        })
+        .join("")}
+    </ul>
+  `;
+
+        scheduleBox.innerHTML = html;
+        document.getElementById("gradeContent").appendChild(scheduleBox);
+      }
 
       function createScoreBox(groupName, data) {
         const sorted = Object.entries(data).sort((a, b) => {
           const A = a[1],
             B = b[1];
-          return B.승점 - A.승점 || B.총점 - A.총점 || B.승 - A.승;
+          const A_diff = A.총점 - (A.실점 || 0);
+          const B_diff = B.총점 - (B.실점 || 0);
+
+          if (B.승점 !== A.승점) return B.승점 - A.승점;
+
+          if (A.맞대결?.[b[0]] === "승") return -1;
+          if (B.맞대결?.[a[0]] === "승") return 1;
+
+          return B_diff - A_diff;
         });
 
         const rows = sorted
           .map((entry, idx) => {
             const [team, stats] = entry;
+
+            const rowClass = idx === 0 ? "first-place" : stats.isWildcard ? "wildcard" : "";
+
             return `
-      <div class="row">
+      <div class="row ${rowClass}">
         <div class="col">${idx + 1}위</div>
         <div class="col">${team}</div>
         <div class="col">${stats.승}</div>
         <div class="col">${stats.패}</div>
         <div class="col">${stats.승점}</div>
-        <div class="col">${stats.총점}</div>
+        <div class="col">${stats.총점 - stats.실점}</div>
       </div>`;
           })
           .join("");
 
         return `
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-lg-6 col-xl-4">
       <div class="score-box">
         <h3 class="mb-1 border-bottom mb-2">${groupName}</h3>
         <div class="row fw-bold border-bottom mb-1 pb-1">
@@ -99,7 +177,7 @@
           <div class="col">승</div>
           <div class="col">패</div>
           <div class="col">승점</div>
-          <div class="col">총득</div>
+          <div class="col">득실</div>
         </div>
         ${rows}
       </div>
@@ -109,15 +187,34 @@
       function showGrade(grade) {
         const container = document.getElementById("gradeContent");
         const groups = gradeGroupMap[grade];
-        const html = groups.map((group) => createScoreBox(group, scoreData[group])).join("");
+
+        const maleGroups = groups.filter((g) => g.includes("남자부"));
+        const femaleGroups = groups.filter((g) => g.includes("여자부"));
+
+        const makeSection = (title, groupList) => {
+          const boxes = groupList.map((group) => createScoreBox(group, scoreData[group])).join("");
+          return `<h4 class="mt-4 mb-3">${title}</h4><div class="row">${boxes}</div>`;
+        };
+
+        const html = makeSection("남자부", maleGroups) + makeSection("여자부", femaleGroups);
+
         container.innerHTML = html;
+
+        // 일정 표시 추가
+        renderSchedule(grade);
       }
 
-      fetch("전처리_결과.json")
+      fetch("전처리_결과_승자승_와일드카드.json")
         .then((res) => res.json())
         .then((json) => {
           scoreData = json;
           showGrade(1); // 초기 화면 1학년
+        });
+      fetch("학년별_경기일정.json")
+        .then((res) => res.json())
+        .then((json) => {
+          schedules = json;
+          if (Object.keys(scoreData).length > 0) showGrade(1);
         });
     </script>
 
