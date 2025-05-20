@@ -4,7 +4,7 @@ import json
 from collections import defaultdict
 
 # 엑셀 파일 불러오기
-filepath = "경기결과 정리표.xlsx"
+filepath = "cjfl.xlsx"
 df = pd.read_excel(filepath)
 
 # 조 편성 정보
