@@ -108,10 +108,10 @@ for _, row in df.iterrows():
     })
 
 # JSON 파일 저장
-with open("전처리_결과_승자승_와일드카드.json", "w", encoding="utf-8") as f:
+with open("팀별점수.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
-with open("학년별_경기일정.json", "w", encoding="utf-8") as f:
+with open("학년별경기일정.json", "w", encoding="utf-8") as f:
     json.dump(schedule_json, f, ensure_ascii=False, indent=2)
 
 print("✅ 저장 완료")

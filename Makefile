@@ -4,7 +4,7 @@ all: preprocess commit
 # 1. 전처리 실행
 preprocess:
 	@echo "🔄 Running Python preprocessing..."
-	python cjfl.py
+	python cleaner.py
 
 # 2. Git 커밋 및 푸시
 commit: preprocess

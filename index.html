@@ -74,7 +74,7 @@
                 margin-right: 5px;
               "
             ></div>
-            <span>1위 팀</span>
+            <span>토너먼트 진출</span>
           </div>
           <div class="d-flex align-items-center">
             <div
@@ -164,36 +164,42 @@
         const rows = sorted
           .map((entry, idx) => {
             const [team, stats] = entry;
+            const isThirdGrade = groupName.startsWith("3학년");
 
-            const rowClass = idx === 0 ? "first-place" : stats.isWildcard ? "wildcard" : "";
+            const rowClass =
+              idx === 0 || (isThirdGrade && idx === 1)
+                ? "first-place"
+                : stats.isWildcard
+                ? "wildcard"
+                : "";
 
             return `
-      <div class="row ${rowClass}">
-        <div class="col">${idx + 1}위</div>
-        <div class="col">${team}</div>
-        <div class="col">${stats.승}</div>
-        <div class="col">${stats.패}</div>
-        <div class="col">${stats.승점}</div>
-        <div class="col">${stats.총점 - stats.실점}</div>
-      </div>`;
+              <div class="row ${rowClass}">
+                <div class="col">${idx + 1}위</div>
+                <div class="col">${team}</div>
+                <div class="col">${stats.승}</div>
+                <div class="col">${stats.패}</div>
+                <div class="col">${stats.승점}</div>
+                <div class="col">${stats.총점 - stats.실점}</div>
+              </div>`;
           })
           .join("");
 
         return `
-    <div class="col-12 col-lg-6 col-xl-4">
-      <div class="score-box">
-        <h3 class="mb-1 border-bottom mb-2">${groupName}</h3>
-        <div class="row fw-bold border-bottom mb-1 pb-1">
-          <div class="col">순위</div>
-          <div class="col">반</div>
-          <div class="col">승</div>
-          <div class="col">패</div>
-          <div class="col">승점</div>
-          <div class="col">득실</div>
-        </div>
-        ${rows}
-      </div>
-    </div>`;
+          <div class="col-12 col-lg-6 col-xl-4">
+            <div class="score-box">
+              <h3 class="mb-1 border-bottom mb-2">${groupName}</h3>
+              <div class="row fw-bold border-bottom mb-1 pb-1">
+                <div class="col">순위</div>
+                <div class="col">반</div>
+                <div class="col">승</div>
+                <div class="col">패</div>
+                <div class="col">승점</div>
+                <div class="col">득실</div>
+              </div>
+              ${rows}
+            </div>
+          </div>`;
       }
 
       function showGrade(grade) {
@@ -216,13 +222,13 @@
         renderSchedule(grade);
       }
 
-      fetch("전처리_결과_승자승_와일드카드.json")
+      fetch("팀별점수.json")
         .then((res) => res.json())
         .then((json) => {
           scoreData = json;
           showGrade(1); // 초기 화면 1학년
         });
-      fetch("학년별_경기일정.json")
+      fetch("학년별경기일정.json")
         .then((res) => res.json())
         .then((json) => {
           schedules = json;
