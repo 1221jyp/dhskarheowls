@@ -4,22 +4,10 @@
     <meta charset="UTF-8" />
     <title>2025 배구 리그</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="google-site-verification" content="TgqRF2FmJVGZ5VyVXXCDtMmODFlCpVqn6AA3Atmv9KY" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W1CHBMTYM5"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-W1CHBMTYM5");
-    </script>
     <style>
       .score-box {
         border: 1px solid #ccc;
@@ -120,6 +108,7 @@
         ],
         3: ["3학년-남자부-A조", "3학년-남자부-B조", "3학년-여자부-A조", "3학년-여자부-B조"],
       };
+
       function renderSchedule(grade) {
         const scheduleBox = document.createElement("div");
         scheduleBox.classList.add("schedule-box", "mt-4");
@@ -146,32 +135,71 @@
         document.getElementById("gradeContent").appendChild(scheduleBox);
       }
 
-      function createScoreBox(groupName, data) {
-        const sorted = Object.entries(data).sort((a, b) => {
-          const A = a[1],
-            B = b[1];
-          const A_diff = A.총점 - (A.실점 || 0);
-          const B_diff = B.총점 - (B.실점 || 0);
+      // 개선된 순위 정렬 함수
+      function sortTeamsByRanking(data) {
+        const teams = Object.entries(data);
 
-          if (B.승점 !== A.승점) return B.승점 - A.승점;
-
-          if (A.맞대결?.[b[0]] === "승") return -1;
-          if (B.맞대결?.[a[0]] === "승") return 1;
-
-          return B_diff - A_diff;
+        // 승점별로 그룹화
+        const groupsByPoints = {};
+        teams.forEach(([team, stats]) => {
+          const points = stats.승점;
+          if (!groupsByPoints[points]) {
+            groupsByPoints[points] = [];
+          }
+          groupsByPoints[points].push([team, stats]);
         });
+
+        let sortedTeams = [];
+
+        // 각 승점 그룹별로 정렬
+        Object.keys(groupsByPoints)
+          .sort((a, b) => b - a) // 승점 높은 순
+          .forEach((points) => {
+            const group = groupsByPoints[points];
+
+            if (group.length === 1) {
+              // 혼자인 경우 그대로 추가
+              sortedTeams.push(...group);
+            } else if (group.length === 2) {
+              // 2팀인 경우 맞대결로 결정
+              const [teamA, teamB] = group;
+              const [nameA, statsA] = teamA;
+              const [nameB, statsB] = teamB;
+
+              if (statsA.맞대결?.[nameB] === "승") {
+                sortedTeams.push(teamA, teamB);
+              } else {
+                sortedTeams.push(teamB, teamA);
+              }
+            } else {
+              // 3팀 이상인 경우 득실차로 바로 결정
+              const sortedGroup = group.sort((a, b) => {
+                const diffA = a[1].총점 - a[1].실점;
+                const diffB = b[1].총점 - b[1].실점;
+                return diffB - diffA; // 득실차 높은 순
+              });
+              sortedTeams.push(...sortedGroup);
+            }
+          });
+
+        return sortedTeams;
+      }
+
+      function createScoreBox(groupName, data) {
+        const sorted = sortTeamsByRanking(data);
 
         const rows = sorted
           .map((entry, idx) => {
             const [team, stats] = entry;
             const isThirdGrade = groupName.startsWith("3학년");
 
-            const rowClass =
-              idx === 0 || (isThirdGrade && idx === 1)
-                ? "first-place"
-                : stats.isWildcard
-                ? "wildcard"
-                : "";
+            // 와일드카드 표시 개선
+            let rowClass = "";
+            if (idx === 0 || (isThirdGrade && idx === 1)) {
+              rowClass = "first-place";
+            } else if (stats.isWildcard === true) {
+              rowClass = "wildcard";
+            }
 
             return `
               <div class="row ${rowClass}">
@@ -206,11 +234,26 @@
         const container = document.getElementById("gradeContent");
         const groups = gradeGroupMap[grade];
 
+        // 버튼 활성화 상태 업데이트
+        document.querySelectorAll(".btn-group button").forEach((btn) => {
+          btn.classList.remove("btn-secondary");
+          btn.classList.add("btn-outline-secondary");
+        });
+        document
+          .querySelectorAll(".btn-group button")
+          [grade - 1].classList.remove("btn-outline-secondary");
+        document.querySelectorAll(".btn-group button")[grade - 1].classList.add("btn-secondary");
+
         const maleGroups = groups.filter((g) => g.includes("남자부"));
         const femaleGroups = groups.filter((g) => g.includes("여자부"));
 
         const makeSection = (title, groupList) => {
-          const boxes = groupList.map((group) => createScoreBox(group, scoreData[group])).join("");
+          const boxes = groupList
+            .map((group) => {
+              const data = scoreData[group] || {};
+              return createScoreBox(group, data);
+            })
+            .join("");
           return `<h4 class="mt-4 mb-3">${title}</h4><div class="row">${boxes}</div>`;
         };
 
@@ -222,17 +265,29 @@
         renderSchedule(grade);
       }
 
+      // 초기화
+      scoreData = sampleScoreData;
+      showGrade(1);
+
+      // 실제 JSON 파일 로드 (있는 경우)
       fetch("팀별점수.json")
         .then((res) => res.json())
         .then((json) => {
           scoreData = json;
-          showGrade(1); // 초기 화면 1학년
+          showGrade(1);
+        })
+        .catch(() => {
+          console.log("JSON 파일을 찾을 수 없어 샘플 데이터를 사용합니다.");
         });
+
       fetch("학년별경기일정.json")
         .then((res) => res.json())
         .then((json) => {
           schedules = json;
           if (Object.keys(scoreData).length > 0) showGrade(1);
+        })
+        .catch(() => {
+          console.log("일정 JSON 파일을 찾을 수 없습니다.");
         });
     </script>
 
