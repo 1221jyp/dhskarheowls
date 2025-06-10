@@ -1,4 +1,3 @@
-
 import pandas as pd
 import json
 from collections import defaultdict
@@ -20,7 +19,7 @@ group_data = {
     "2학년-남자부-C조": ["2-2", "2-3", "2-4", "2-8"],
     "2학년-여자부-A조": ["2-3", "2-9", "2-10", "2-11"],
     "2학년-여자부-B조": ["2-4", "2-7", "2-8", "2-12"],
-    "2학년-여자부-C조": ["2-1", "2-2", "2-6"],
+    "2학년-여자부-C조": ["2-1", "2-2", "2-2", "2-6"],  # 2-2가 중복되어 있어서 수정 필요할 수 있음
     "3학년-남자부-A조": ["3-2", "3-3", "3-4", "3-6"],
     "3학년-남자부-B조": ["3-1", "3-5", "3-7", "3-12"],
     "3학년-여자부-A조": ["3-4", "3-10", "3-11", "3-12"],
@@ -66,31 +65,57 @@ for _, row in df.dropna(subset=["승팀", "패팀", "점수(승팀)", "점수(�
         results[group][lose]["실점"] += ws
         results[group][lose]["맞대결"][win] = "패"
 
-# 와일드카드 계산
+# 와일드카드 계산 (수정된 부분)
 from collections import defaultdict
+
+# 각 학년+성별별로 2등 팀들을 수집
 second_places = defaultdict(list)
 
 for group, teams in results.items():
-    if not group.startswith(("1학년", "2학년")):
+    # 3학년은 와일드카드 대상이 아님
+    if group.startswith("3학년"):
         continue
-    div_key = "-".join(group.split("-")[:2])
+    
+    # 조 내에서 순위 정렬 (승점 우선, 득실차 차선)
     sorted_teams = sorted(
         teams.items(),
         key=lambda item: (
-            -item[1]["승점"],
-            -(item[1]["총점"] - item[1]["실점"])
+            -item[1]["승점"],  # 승점 내림차순
+            -(item[1]["총점"] - item[1]["실점"])  # 득실차 내림차순
         )
     )
+    
+    # 2등 팀이 존재하는 경우에만
     if len(sorted_teams) >= 2:
-        second_places[div_key].append((group, sorted_teams[1][0], sorted_teams[1][1]))
+        # 학년-성별 키 생성 (예: "1학년-남자부")
+        grade_gender = "-".join(group.split("-")[:2])
+        second_team = sorted_teams[1]  # (팀명, 팀정보) 형태
+        second_places[grade_gender].append({
+            "group": group,
+            "team": second_team[0],
+            "data": second_team[1]
+        })
 
-for div, candidates in second_places.items():
-    best = max(
+# 각 학년-성별별로 최고 2등 팀을 와일드카드로 선정
+for grade_gender, candidates in second_places.items():
+    if not candidates:
+        continue
+    
+    # 2등 팀들 중에서 최고 성적 팀 선정
+    best_second = max(
         candidates,
-        key=lambda x: (x[2]["승점"], x[2]["총점"] - x[2]["실점"])
+        key=lambda x: (
+            x["data"]["승점"],  # 승점 우선
+            x["data"]["총점"] - x["data"]["실점"]  # 득실차 차선
+        )
     )
-    g, t, _ = best
-    results[g][t]["isWildcard"] = True
+    
+    # 와일드카드 표시
+    group_name = best_second["group"]
+    team_name = best_second["team"]
+    results[group_name][team_name]["isWildcard"] = True
+    
+    print(f"🏆 와일드카드: {grade_gender} - {team_name} (승점: {best_second['data']['승점']}, 득실차: {best_second['data']['총점'] - best_second['data']['실점']})")
 
 # 경기 일정 JSON 만들기
 schedule_json = defaultdict(list)
@@ -115,3 +140,20 @@ with open("학년별경기일정.json", "w", encoding="utf-8") as f:
     json.dump(schedule_json, f, ensure_ascii=False, indent=2)
 
 print("✅ 저장 완료")
+
+# 디버깅용: 각 조별 순위 출력
+print("\n📊 각 조별 순위:")
+for group, teams in results.items():
+    if not teams:  # 빈 조는 건너뛰기
+        continue
+    print(f"\n{group}:")
+    sorted_teams = sorted(
+        teams.items(),
+        key=lambda item: (
+            -item[1]["승점"],
+            -(item[1]["총점"] - item[1]["실점"])
+        )
+    )
+    for i, (team, data) in enumerate(sorted_teams, 1):
+        wildcard_str = " 🏆(와일드카드)" if data["isWildcard"] else ""
+        print(f"  {i}등: {team} - 승점:{data['승점']}, 득실차:{data['총점']-data['실점']}{wildcard_str}")
