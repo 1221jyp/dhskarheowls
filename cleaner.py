@@ -19,7 +19,7 @@ group_data = {
     "2학년-남자부-C조": ["2-2", "2-3", "2-4", "2-8"],
     "2학년-여자부-A조": ["2-3", "2-9", "2-10", "2-11"],
     "2학년-여자부-B조": ["2-4", "2-7", "2-8", "2-12"],
-    "2학년-여자부-C조": ["2-1", "2-2", "2-2", "2-6"],  # 2-2가 중복되어 있어서 수정 필요할 수 있음
+    "2학년-여자부-C조": ["2-1", "2-2", "2-6"],
     "3학년-남자부-A조": ["3-2", "3-3", "3-4", "3-6"],
     "3학년-남자부-B조": ["3-1", "3-5", "3-7", "3-12"],
     "3학년-여자부-A조": ["3-4", "3-10", "3-11", "3-12"],
@@ -65,10 +65,53 @@ for _, row in df.dropna(subset=["승팀", "패팀", "점수(승팀)", "점수(�
         results[group][lose]["실점"] += ws
         results[group][lose]["맞대결"][win] = "패"
 
-# 와일드카드 계산 (수정된 부분)
-from collections import defaultdict
+# 승자승 규칙 적용 함수
+def sort_teams_with_head_to_head(teams_data):
+    """승점이 같은 팀들에 대해 승자승 규칙 적용"""
+    teams_list = list(teams_data.items())
+    
+    # 승점별로 그룹화
+    point_groups = defaultdict(list)
+    for team, data in teams_list:
+        point_groups[data["승점"]].append((team, data))
+    
+    final_ranking = []
+    
+    for points in sorted(point_groups.keys(), reverse=True):
+        teams_with_same_points = point_groups[points]
+        
+        if len(teams_with_same_points) == 1:
+            # 승점이 같은 팀이 1개면 그대로 추가
+            final_ranking.extend(teams_with_same_points)
+        else:
+            # 승점이 같은 팀이 여러 개면 승자승 규칙 적용
+            if len(teams_with_same_points) == 2:
+                # 2팀이면 직접 대결 결과로 정렬
+                team1, data1 = teams_with_same_points[0]
+                team2, data2 = teams_with_same_points[1]
+                
+                if team2 in data1["맞대결"] and data1["맞대결"][team2] == "승":
+                    final_ranking.extend([(team1, data1), (team2, data2)])
+                elif team1 in data2["맞대결"] and data2["맞대결"][team1] == "승":
+                    final_ranking.extend([(team2, data2), (team1, data1)])
+                else:
+                    # 맞대결 결과가 없으면 득실차로 정렬
+                    sorted_by_goal_diff = sorted(
+                        teams_with_same_points,
+                        key=lambda x: -(x[1]["총점"] - x[1]["실점"])
+                    )
+                    final_ranking.extend(sorted_by_goal_diff)
+            else:
+                # 3팀 이상이면 득실차로 정렬 (승자승 계산이 복잡해서)
+                sorted_by_goal_diff = sorted(
+                    teams_with_same_points,
+                    key=lambda x: -(x[1]["총점"] - x[1]["실점"])
+                )
+                final_ranking.extend(sorted_by_goal_diff)
+    
+    return final_ranking
 
-# 각 학년+성별별로 2등 팀들을 수집
+# 와일드카드 계산
 second_places = defaultdict(list)
 
 for group, teams in results.items():
@@ -76,14 +119,8 @@ for group, teams in results.items():
     if group.startswith("3학년"):
         continue
     
-    # 조 내에서 순위 정렬 (승점 우선, 득실차 차선)
-    sorted_teams = sorted(
-        teams.items(),
-        key=lambda item: (
-            -item[1]["승점"],  # 승점 내림차순
-            -(item[1]["총점"] - item[1]["실점"])  # 득실차 내림차순
-        )
-    )
+    # 조 내에서 순위 정렬 (승자승 규칙 적용)
+    sorted_teams = sort_teams_with_head_to_head(teams)
     
     # 2등 팀이 존재하는 경우에만
     if len(sorted_teams) >= 2:
@@ -101,7 +138,7 @@ for grade_gender, candidates in second_places.items():
     if not candidates:
         continue
     
-    # 2등 팀들 중에서 최고 성적 팀 선정
+    # 2등 팀들 중에서 최고 성적 팀 선정 (승점 우선, 득실차 차선)
     best_second = max(
         candidates,
         key=lambda x: (
@@ -142,18 +179,12 @@ with open("학년별경기일정.json", "w", encoding="utf-8") as f:
 print("✅ 저장 완료")
 
 # 디버깅용: 각 조별 순위 출력
-print("\n📊 각 조별 순위:")
+print("\n📊 각 조별 순위 (승자승 규칙 적용):")
 for group, teams in results.items():
     if not teams:  # 빈 조는 건너뛰기
         continue
     print(f"\n{group}:")
-    sorted_teams = sorted(
-        teams.items(),
-        key=lambda item: (
-            -item[1]["승점"],
-            -(item[1]["총점"] - item[1]["실점"])
-        )
-    )
+    sorted_teams = sort_teams_with_head_to_head(teams)
     for i, (team, data) in enumerate(sorted_teams, 1):
         wildcard_str = " 🏆(와일드카드)" if data["isWildcard"] else ""
         print(f"  {i}등: {team} - 승점:{data['승점']}, 득실차:{data['총점']-data['실점']}{wildcard_str}")
