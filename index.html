@@ -8,6 +8,12 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-bracket/0.11.1/jquery.bracket.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/jquery-bracket/0.11.1/jquery.bracket.min.css"
+    />
     <style>
       .score-box {
         border: 1px solid #ccc;
@@ -31,9 +37,28 @@
       .schedule-female {
         background-color: #ffe0e0; /* 연분홍 */
       }
+      .content-section {
+        display: none;
+      }
+      .content-section.active {
+        display: block;
+      }
+      .tournament-bracket {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+      }
+      .bracket-container {
+        min-height: 400px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     </style>
   </head>
-  <body class="p-0" onload="showGrade(1)">
+  <body class="p-0">
     <header class="text-white p-3" style="background-color: #000">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center"
@@ -43,14 +68,45 @@
     </header>
 
     <div class="container mt-4">
-      <div class="mt-2" id="gradeSelection">
-        <div class="btn-group w-100 d-flex flex-wrap gap-2 mb-4" role="group">
-          <button class="btn btn-outline-secondary flex-fill" onclick="showGrade(1)">1학년</button>
-          <button class="btn btn-outline-secondary flex-fill" onclick="showGrade(2)">2학년</button>
-          <button class="btn btn-outline-secondary flex-fill" onclick="showGrade(3)">3학년</button>
+      <div class="mt-2" id="mainNavigation">
+        <div class="row g-2 mb-4">
+          <!-- 본선 버튼들 -->
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-success w-100" onclick="showSection('grade1-main')">
+              1학년 본선
+            </button>
+          </div>
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-success w-100" onclick="showSection('grade2-main')">
+              2학년 본선
+            </button>
+          </div>
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-success w-100" onclick="showSection('grade3-main')">
+              3학년 본선
+            </button>
+          </div>
+          <!-- 예선 결과 버튼들 -->
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-primary w-100" onclick="showSection('grade1-prelim')">
+              1학년 예선 결과
+            </button>
+          </div>
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-primary w-100" onclick="showSection('grade2-prelim')">
+              2학년 예선 결과
+            </button>
+          </div>
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-primary w-100" onclick="showSection('grade3-prelim')">
+              3학년 예선 결과
+            </button>
+          </div>
         </div>
       </div>
-      <div class="mt-3" id="legend">
+
+      <!-- 범례 -->
+      <div class="mt-3" id="legend" style="display: none">
         <div class="d-flex flex-wrap align-items-center gap-3">
           <div class="d-flex align-items-center">
             <div
@@ -79,15 +135,67 @@
         </div>
       </div>
 
-      <!-- HTML 출력 영역 -->
-      <div class="row mb-4" id="gradeContent">
-        <!-- JS로 학년별 조별 승점 정보 자동 삽입 -->
+      <!-- 예선 결과 섹션들 -->
+      <div class="content-section" id="grade1-prelim">
+        <div class="row mb-4" id="grade1-content">
+          <!-- JS로 1학년 예선 결과 삽입 -->
+        </div>
+      </div>
+
+      <div class="content-section" id="grade2-prelim">
+        <div class="row mb-4" id="grade2-content">
+          <!-- JS로 2학년 예선 결과 삽입 -->
+        </div>
+      </div>
+
+      <div class="content-section" id="grade3-prelim">
+        <div class="row mb-4" id="grade3-content">
+          <!-- JS로 3학년 예선 결과 삽입 -->
+        </div>
+      </div>
+
+      <!-- 본선 토너먼트 섹션들 -->
+      <div class="content-section" id="grade1-main">
+        <h2 class="mb-4">1학년 본선 토너먼트</h2>
+        <div class="tournament-bracket">
+          <h4>남자부 결승전</h4>
+          <div class="bracket-container" id="grade1-male-bracket"></div>
+        </div>
+        <div class="tournament-bracket">
+          <h4>여자부 결승전</h4>
+          <div class="bracket-container" id="grade1-female-bracket"></div>
+        </div>
+      </div>
+
+      <div class="content-section" id="grade2-main">
+        <h2 class="mb-4">2학년 본선 토너먼트</h2>
+        <div class="tournament-bracket">
+          <h4>남자부 결승전</h4>
+          <div class="bracket-container" id="grade2-male-bracket"></div>
+        </div>
+        <div class="tournament-bracket">
+          <h4>여자부 결승전</h4>
+          <div class="bracket-container" id="grade2-female-bracket"></div>
+        </div>
+      </div>
+
+      <div class="content-section" id="grade3-main">
+        <h2 class="mb-4">3학년 본선 토너먼트</h2>
+        <div class="tournament-bracket">
+          <h4>남자부 결승전</h4>
+          <div class="bracket-container" id="grade3-male-bracket"></div>
+        </div>
+        <div class="tournament-bracket">
+          <h4>여자부 결승전</h4>
+          <div class="bracket-container" id="grade3-female-bracket"></div>
+        </div>
       </div>
     </div>
 
     <script>
       let scoreData = {};
       let schedules = {};
+      let currentSection = null;
 
       const gradeGroupMap = {
         1: [
@@ -109,30 +217,168 @@
         3: ["3학년-남자부-A조", "3학년-남자부-B조", "3학년-여자부-A조", "3학년-여자부-B조"],
       };
 
-      function renderSchedule(grade) {
-        const scheduleBox = document.createElement("div");
-        scheduleBox.classList.add("schedule-box", "mt-4");
+      // 토너먼트 샘플 데이터 (실제로는 예선 결과에서 가져와야 함)
+      const tournamentData = {
+        1: {
+          male: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+          female: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+        },
+        2: {
+          male: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+          female: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+        },
+        3: {
+          male: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+          female: {
+            teams: [
+              ["A반", "B반"],
+              ["C반", "D반"],
+            ],
+            results: [],
+          },
+        },
+      };
 
+      function showSection(sectionId) {
+        // 모든 섹션 숨기기
+        document.querySelectorAll(".content-section").forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        // 모든 버튼 비활성화
+        document.querySelectorAll("#mainNavigation button").forEach((btn) => {
+          btn.classList.remove("btn-primary", "btn-success");
+          if (btn.textContent.includes("예선")) {
+            btn.classList.add("btn-outline-primary");
+          } else {
+            btn.classList.add("btn-outline-success");
+          }
+        });
+
+        // 선택된 섹션 활성화
+        const selectedSection = document.getElementById(sectionId);
+        if (selectedSection) {
+          selectedSection.classList.add("active");
+          currentSection = sectionId;
+
+          // 선택된 버튼 활성화
+          const selectedButton = event.target;
+          selectedButton.classList.remove("btn-outline-primary", "btn-outline-success");
+          if (selectedButton.textContent.includes("예선")) {
+            selectedButton.classList.add("btn-primary");
+            document.getElementById("legend").style.display = "block";
+          } else {
+            selectedButton.classList.add("btn-success");
+            document.getElementById("legend").style.display = "none";
+          }
+
+          // 해당 섹션 내용 로드
+          if (sectionId.includes("prelim")) {
+            loadPrelimResults(sectionId);
+          } else if (sectionId.includes("main")) {
+            loadTournamentBracket(sectionId);
+          }
+        }
+      }
+
+      function loadPrelimResults(sectionId) {
+        const grade = parseInt(sectionId.replace("grade", "").replace("-prelim", ""));
+        const groups = gradeGroupMap[grade];
+        const contentId = `grade${grade}-content`;
+
+        const maleGroups = groups.filter((g) => g.includes("남자부"));
+        const femaleGroups = groups.filter((g) => g.includes("여자부"));
+
+        const makeSection = (title, groupList) => {
+          const boxes = groupList
+            .map((group) => {
+              const data = scoreData[group] || {};
+              return createScoreBox(group, data);
+            })
+            .join("");
+          return `<h4 class="mt-4 mb-3">${title}</h4><div class="row">${boxes}</div>`;
+        };
+
+        const html = makeSection("남자부", maleGroups) + makeSection("여자부", femaleGroups);
+        document.getElementById(contentId).innerHTML = html;
+
+        // 일정 표시 추가
+        renderSchedule(grade, contentId);
+      }
+
+      function loadTournamentBracket(sectionId) {
+        const grade = parseInt(sectionId.replace("grade", "").replace("-main", ""));
+
+        // 남자부 토너먼트
+        const maleData = tournamentData[grade].male;
+        $(`#grade${grade}-male-bracket`).bracket({
+          init: {
+            teams: maleData.teams,
+            results: maleData.results,
+          },
+        });
+
+        // 여자부 토너먼트
+        const femaleData = tournamentData[grade].female;
+        $(`#grade${grade}-female-bracket`).bracket({
+          init: {
+            teams: femaleData.teams,
+            results: femaleData.results,
+          },
+        });
+      }
+
+      function renderSchedule(grade, containerId) {
+        const container = document.getElementById(containerId);
         const list = schedules[grade] || [];
 
-        const html = `
-    <h4 class="mt-4">📅 ${grade}학년 경기 일정</h4>
-    <ul class="list-group">
-      ${list
-        .map((row) => {
-          const genderClass = row.성별 === "남" ? "schedule-male" : "schedule-female";
-          if (row.승팀) {
-            return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} → ${row.승팀}반 승 (${row.점수승}:${row.점수패})</li>`;
-          } else {
-            return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} (예정)</li>`;
-          }
-        })
-        .join("")}
-    </ul>
-  `;
+        const scheduleHtml = `
+          <h4 class="mt-4">📅 ${grade}학년 경기 일정</h4>
+          <ul class="list-group">
+            ${list
+              .map((row) => {
+                const genderClass = row.성별 === "남" ? "schedule-male" : "schedule-female";
+                if (row.승팀) {
+                  return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} → ${row.승팀}반 승 (${row.점수승}:${row.점수패})</li>`;
+                } else {
+                  return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} (예정)</li>`;
+                }
+              })
+              .join("")}
+          </ul>
+        `;
 
-        scheduleBox.innerHTML = html;
-        document.getElementById("gradeContent").appendChild(scheduleBox);
+        container.innerHTML += scheduleHtml;
       }
 
       // 개선된 순위 정렬 함수
@@ -230,41 +476,6 @@
           </div>`;
       }
 
-      function showGrade(grade) {
-        const container = document.getElementById("gradeContent");
-        const groups = gradeGroupMap[grade];
-
-        // 버튼 활성화 상태 업데이트
-        document.querySelectorAll(".btn-group button").forEach((btn) => {
-          btn.classList.remove("btn-secondary");
-          btn.classList.add("btn-outline-secondary");
-        });
-        document
-          .querySelectorAll(".btn-group button")
-          [grade - 1].classList.remove("btn-outline-secondary");
-        document.querySelectorAll(".btn-group button")[grade - 1].classList.add("btn-secondary");
-
-        const maleGroups = groups.filter((g) => g.includes("남자부"));
-        const femaleGroups = groups.filter((g) => g.includes("여자부"));
-
-        const makeSection = (title, groupList) => {
-          const boxes = groupList
-            .map((group) => {
-              const data = scoreData[group] || {};
-              return createScoreBox(group, data);
-            })
-            .join("");
-          return `<h4 class="mt-4 mb-3">${title}</h4><div class="row">${boxes}</div>`;
-        };
-
-        const html = makeSection("남자부", maleGroups) + makeSection("여자부", femaleGroups);
-
-        container.innerHTML = html;
-
-        // 일정 표시 추가
-        renderSchedule(grade);
-      }
-
       // JSON 파일 로드
       Promise.all([
         fetch("팀별점수.json").then((res) => res.json()),
@@ -275,7 +486,7 @@
         .then(([scores, schedule]) => {
           scoreData = scores;
           schedules = schedule;
-          showGrade(1); // 초기 화면 1학년
+          // 초기 페이지는 빈 상태로 유지 (버튼만 표시)
         })
         .catch((error) => {
           console.error("JSON 파일 로드 실패:", error);
