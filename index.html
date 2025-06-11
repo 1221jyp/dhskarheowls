@@ -158,11 +158,11 @@
       <div class="content-section" id="grade1-main">
         <h2 class="mb-4">1학년 본선 토너먼트</h2>
         <div class="tournament-bracket">
-          <h4>남자부 결승전</h4>
+          <h4>남자부</h4>
           <div class="bracket-container" id="grade1-male-bracket"></div>
         </div>
         <div class="tournament-bracket">
-          <h4>여자부 결승전</h4>
+          <h4>여자부</h4>
           <div class="bracket-container" id="grade1-female-bracket"></div>
         </div>
       </div>
@@ -170,11 +170,11 @@
       <div class="content-section" id="grade2-main">
         <h2 class="mb-4">2학년 본선 토너먼트</h2>
         <div class="tournament-bracket">
-          <h4>남자부 결승전</h4>
+          <h4>남자부</h4>
           <div class="bracket-container" id="grade2-male-bracket"></div>
         </div>
         <div class="tournament-bracket">
-          <h4>여자부 결승전</h4>
+          <h4>여자부</h4>
           <div class="bracket-container" id="grade2-female-bracket"></div>
         </div>
       </div>
@@ -182,11 +182,11 @@
       <div class="content-section" id="grade3-main">
         <h2 class="mb-4">3학년 본선 토너먼트</h2>
         <div class="tournament-bracket">
-          <h4>남자부 결승전</h4>
+          <h4>남자부</h4>
           <div class="bracket-container" id="grade3-male-bracket"></div>
         </div>
         <div class="tournament-bracket">
-          <h4>여자부 결승전</h4>
+          <h4>여자부</h4>
           <div class="bracket-container" id="grade3-female-bracket"></div>
         </div>
       </div>
@@ -196,6 +196,82 @@
       let scoreData = {};
       let schedules = {};
       let currentSection = null;
+
+      const finalMatchSchedules = {
+        1: {
+          male: [
+            "6월 17일 - 준결승 1경기: A반 vs B반",
+            "6월 17일 - 준결승 2경기: C반 vs D반",
+            "6월 18일 - 3·4위전",
+            "6월 19일 - 결승전",
+          ],
+          female: [
+            "6월 17일 - 준결승 1경기: A반 vs B반",
+            "6월 17일 - 준결승 2경기: C반 vs D반",
+            "6월 18일 - 3·4위전",
+            "6월 19일 - 결승전",
+          ],
+        },
+        2: {
+          male: [
+            "6월 20일 - 준결승 1경기: A반 vs B반",
+            "6월 20일 - 준결승 2경기: C반 vs D반",
+            "6월 21일 - 3·4위전",
+            "6월 22일 - 결승전",
+          ],
+          female: [
+            "6월 20일 - 준결승 1경기: A반 vs B반",
+            "6월 20일 - 준결승 2경기: C반 vs D반",
+            "6월 21일 - 3·4위전",
+            "6월 22일 - 결승전",
+          ],
+        },
+        3: {
+          male: [
+            "6월 24일 - 준결승 1경기: A반 vs B반",
+            "6월 24일 - 준결승 2경기: C반 vs D반",
+            "6월 25일 - 3·4위전",
+            "6월 26일 - 결승전",
+          ],
+          female: [
+            "6월 24일 - 준결승 1경기: A반 vs B반",
+            "6월 24일 - 준결승 2경기: C반 vs D반",
+            "6월 25일 - 3·4위전",
+            "6월 26일 - 결승전",
+          ],
+        },
+      };
+
+      function renderFinalMatchSchedule(grade) {
+        const container = document.querySelector(`#grade${grade}-main`);
+        const schedule = finalMatchSchedules[grade];
+        if (!schedule) return;
+
+        const maleItems = schedule.male
+          .map((line) => `<li class="list-group-item schedule-male">${line}</li>`)
+          .join("");
+        const femaleItems = schedule.female
+          .map((line) => `<li class="list-group-item schedule-female">${line}</li>`)
+          .join("");
+
+        const scheduleHTML = `
+    <div class="mt-5 mb-5">
+      <h4>📅 ${grade}학년 본선 경기 일정</h4>
+
+      <h5 class="mt-3">남자부</h5>
+      <ul class="list-group mb-4">
+        ${maleItems}
+      </ul>
+
+      <h5>여자부</h5>
+      <ul class="list-group">
+        ${femaleItems}
+      </ul>
+    </div>
+  `;
+
+        container.insertAdjacentHTML("beforeend", scheduleHTML);
+      }
 
       const gradeGroupMap = {
         1: [
@@ -356,6 +432,8 @@
             results: femaleData.results,
           },
         });
+
+        renderFinalMatchSchedule(grade);
       }
 
       function renderSchedule(grade, containerId) {
