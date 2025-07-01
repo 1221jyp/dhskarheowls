@@ -255,20 +255,20 @@
           .join("");
 
         const scheduleHTML = `
-    <div class="mt-5 mb-5">
-      <h4>📅 ${grade}학년 본선 경기 일정</h4>
+        <div class="mt-5 mb-5">
+          <h4>📅 ${grade}학년 본선 경기 일정</h4>
 
-      <h5 class="mt-3">남자부</h5>
-      <ul class="list-group mb-4">
-        ${maleItems}
-      </ul>
+          <h5 class="mt-3">남자부</h5>
+          <ul class="list-group mb-4">
+            ${maleItems}
+          </ul>
 
-      <h5>여자부</h5>
-      <ul class="list-group">
-        ${femaleItems}
-      </ul>
-    </div>
-  `;
+          <h5>여자부</h5>
+          <ul class="list-group">
+            ${femaleItems}
+          </ul>
+        </div>
+      `;
 
         container.insertAdjacentHTML("beforeend", scheduleHTML);
       }
@@ -301,14 +301,14 @@
               ["11반", "8반"],
               ["6반", "7반"],
             ],
-            results: [],
+            results: [[19, 21], []],
           },
           female: {
             teams: [
               ["2반", "9반"],
               ["3반", "12반"],
             ],
-            results: [],
+            results: [[21, 18], []],
           },
         },
         2: {
@@ -317,14 +317,14 @@
               ["5반", "7반"],
               ["2반", "4반"],
             ],
-            results: [],
+            results: [[16, 21], []],
           },
           female: {
             teams: [
               ["3반", "8반"],
               ["1반", "10반"],
             ],
-            results: [],
+            results: [[16, 21], []],
           },
         },
         3: {
@@ -333,14 +333,14 @@
               ["4반", "7반"],
               ["3반", "1반"],
             ],
-            results: [],
+            results: [[21, 14], []],
           },
           female: {
             teams: [
               ["4반", "2반"],
               ["12반", "6반"],
             ],
-            results: [],
+            results: [[21, 17], []],
           },
         },
       };
@@ -441,20 +441,20 @@
         const list = schedules[grade] || [];
 
         const scheduleHtml = `
-          <h4 class="mt-4">📅 ${grade}학년 경기 일정</h4>
-          <ul class="list-group">
-            ${list
-              .map((row) => {
-                const genderClass = row.성별 === "남" ? "schedule-male" : "schedule-female";
-                if (row.승팀) {
-                  return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} → ${row.승팀}반 승 (${row.점수승}:${row.점수패})</li>`;
-                } else {
-                  return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} (예정)</li>`;
-                }
-              })
-              .join("")}
-          </ul>
-        `;
+              <h4 class="mt-4">📅 ${grade}학년 경기 일정</h4>
+              <ul class="list-group">
+                ${list
+                  .map((row) => {
+                    const genderClass = row.성별 === "남" ? "schedule-male" : "schedule-female";
+                    if (row.승팀) {
+                      return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} → ${row.승팀}반 승 (${row.점수승}:${row.점수패})</li>`;
+                    } else {
+                      return `<li class="list-group-item ${genderClass}">${row.날짜} | ${row.성별}자 ${row.조} | ${row.경기} (예정)</li>`;
+                    }
+                  })
+                  .join("")}
+              </ul>
+            `;
 
         container.innerHTML += scheduleHtml;
       }
@@ -526,32 +526,32 @@
             }
 
             return `
-              <div class="row ${rowClass}">
-                <div class="col">${idx + 1}위</div>
-                <div class="col">${team}</div>
-                <div class="col">${stats.승}</div>
-                <div class="col">${stats.패}</div>
-                <div class="col">${stats.승점}</div>
-                <div class="col">${stats.총점 - stats.실점}</div>
-              </div>`;
+                  <div class="row ${rowClass}">
+                    <div class="col">${idx + 1}위</div>
+                    <div class="col">${team}</div>
+                    <div class="col">${stats.승}</div>
+                    <div class="col">${stats.패}</div>
+                    <div class="col">${stats.승점}</div>
+                    <div class="col">${stats.총점 - stats.실점}</div>
+                  </div>`;
           })
           .join("");
 
         return `
-          <div class="col-12 col-lg-6 col-xl-4">
-            <div class="score-box">
-              <h3 class="mb-1 border-bottom mb-2">${groupName}</h3>
-              <div class="row fw-bold border-bottom mb-1 pb-1">
-                <div class="col">순위</div>
-                <div class="col">반</div>
-                <div class="col">승</div>
-                <div class="col">패</div>
-                <div class="col">승점</div>
-                <div class="col">득실</div>
-              </div>
-              ${rows}
-            </div>
-          </div>`;
+              <div class="col-12 col-lg-6 col-xl-4">
+                <div class="score-box">
+                  <h3 class="mb-1 border-bottom mb-2">${groupName}</h3>
+                  <div class="row fw-bold border-bottom mb-1 pb-1">
+                    <div class="col">순위</div>
+                    <div class="col">반</div>
+                    <div class="col">승</div>
+                    <div class="col">패</div>
+                    <div class="col">승점</div>
+                    <div class="col">득실</div>
+                  </div>
+                  ${rows}
+                </div>
+              </div>`;
       }
 
       // JSON 파일 로드
